@@ -1,0 +1,4 @@
+The file here contains latitude-longitude information associated with different markers.
+You need to find out all of these latitude-longitude pairs, as well as the associated marker id
+with these pairs. Create a dataframe out of this, which has three columns - latitude, longitude
+and marker id.
