@@ -1,0 +1,47 @@
+Aim - Share of successfully delivered orders that can be batched for Bangalore (delivery fulfilled by zomato)
+
+Data Loading, Filtering, cleaning and transformation:
+df = pd.read_csv('cs_data_2.csv')
+1.	City is Bangalore 
+df=df[df['city_name']=='Bengaluru']
+2.	Successfully delivered orders
+df=df[df['order_status']==6]
+3.	Delivery fulfilled by zomato
+df=df[df['driver_type']==15]
+4.	Cleaning
+df=df[df['predicted_food_prep_time'].notnull()]
+df=df[df['pickup_to_drop_location_km'].notnull()]
+df=df[df['expected_delivery_time'].notnull()]
+5.	Create a column to get the timestamp when the order is ready for checkout from restaurant.
+Predicted_food_prep_timestamp = created_at + predicted_food_prep_time
+6.	Create a column to get the estimated delivery_time to for a driver to deliver the order.
+Assumption: I added 5 minutes extra to the delivery time, just to be on the safe side and avoid a breach in case of heavy traffic.
+Delivery_time (in mins) = pickup_to_drop_location_km/15*60 + 5 
+7.	Create a column buffer_time, which is the time an order can wait for another order without the possibility of order breach.
+Buffer_time = expected_delivery_time - predicted_food_prep_time - delivery_time
+
+Approach:
+1.	Get the total number of orders by counting unique food_order_id in the dataset.
+2.	Group orders based on food_restaurant_id and food_order_id.
+3.	Evaluate conditions for batching orders (all should hold true):
+a.	The timestamp at which the second order is prepared should be less than the timestamp at which the first order is prepared plus the buffer_time for order 1.
+Predicted_food_prep_timestamp O2 < Predicted_food_prep_timestamp O1 + buffer_time O1.
+b.	Sum of the distance from the restaurant (say R) to the location of order 1 (say A) and the distance between the location of order 1 to order 2 (say B) should be less than the distance to be covered to return from the location of order1 to restaurant and then reach the location of order 2 from the restaurant.
+RA+AB<AR+RB
+c.	Both order 1 and order 2 are delivered on time (there is no breach)
+Batch_order_checkout_timestamp = max (predicated_food_prep_timestamp O1, predicated_food_prep_timestamp O1)
+Expected_delivery_time O1> Batch_order_checkout_timestamp + deliverytime_R_A (time to deliver O1)
+Expected_delivery_time O2 > Batch_order_checkout_timestamp + deliverytime_R_A (time to deliver O1) + deliverytime_A_B (time to delivery O2 from order 1 location to order 2 location). 
+
+Findings:
+(Here, I am displaying the results for one restaurant. To run the code on the entire data set, please comment the lines in the code which have a comment message that says: #comment this line to run for entire dataset (all restaurant ids). Then it would work for the entire dataset)
+For restaurant id 4653062
+Total orders:  94
+Number of batched orders:  78
+Share of successfully delivered orders that can be batched:  82.97872340425532
+
+
+
+
+
+
